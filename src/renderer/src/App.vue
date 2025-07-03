@@ -312,6 +312,10 @@ export default defineComponent({
                 // eslint-disable-next-line
                 console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to ssqq on stapxs-qq-lite.user ]')
             }
+            // 跳过导航介绍（引导页）
+            if (this.autoLoginParams.skipwelcome === '1' || this.autoLoginParams.skipwelcome === 'true') {
+                localStorage.setItem('guide', '1');
+            }
             // 初始化全局参数
             runtimeData.tags.clientType = 'web'
             if(window.electron != undefined) {
@@ -360,61 +364,26 @@ export default defineComponent({
             }
             // 加载设置项
             runtimeData.sysConfig = await Option.load()
-            if(this.dev) {
-                logger.debug('stapxs-qq-lite.su:$/mnt/boot/dawnHunt/bin/core --pour /mnt/app/bin/main', true)
-                logger.system('[ dawnHuntCore Version: 1.0 Beta, dawnHuntDB: 2025-04-24 ]')
+            // === 修复：本地缓存加载后再用URL参数覆盖 ===
+            if (this.autoLoginParams.address) {
+                this.loginInfo.address = this.autoLoginParams.address;
             } else {
-                logger.debug('stapxs-qq-lite.user:$/mnt/app/bin/main', true)
+                this.loginInfo.address = runtimeData.sysConfig.address;
             }
-            logger.add(LogType.DEBUG, '系统配置', runtimeData.sysConfig)
-            // PS：重新再应用部分需要加载完成后才能应用的设置
-            Option.run('opt_dark', Option.get('opt_dark'))
-            Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
-            Option.run('theme_color', Option.get('theme_color'))
-            Option.run(
-                'opt_auto_win_color',
-                Option.get('opt_auto_win_color'),
-            )
-            if (['linux', 'win32'].includes(runtimeData.tags.platform ?? '')) {
-                const app = document.getElementById('base-app')
-                if (app) app.classList.add('withBar')
-            }
-            // 基础初始化完成
-            logger.system('欢迎回来，开发者。Stapxs QQ Lite 正处于 ' + (this.dev ? 'development' : 'production') + ' 模式。正在为您加载更多功能。')
-            // 加载移动平台特性
-            App.loadMobile()
-            // 加载额外样式
-            App.loadAppendStyle()
-            const baseApp = document.getElementById('base-app')
-            if (baseApp) {
-                baseApp.style.setProperty('--safe-area-bottom',
-                    (Option.get('fs_adaptation') > 0 ? Option.get('fs_adaptation') : 0) + 'px')
-                baseApp.style.setProperty('--safe-area-top', '0')
-                baseApp.style.setProperty('--safe-area-left', '0')
-                baseApp.style.setProperty('--safe-area-right', '0')
-                // Capacitor：移动端初始化安全区域
-                if (runtimeData.tags.clientType == 'capacitor') {
-                    const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
-                    if (safeArea) {
-                        logger.add(LogType.DEBUG, '安全区域：', safeArea)
-                        baseApp.style.setProperty('--safe-area-top', safeArea.top + 'px')
-                        baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
-                        baseApp.style.setProperty('--safe-area-left', safeArea.left + 'px')
-                        baseApp.style.setProperty('--safe-area-right', safeArea.right + 'px')
-                        // 图片查看器安全区域
-                        document.documentElement.style.setProperty('--safe-area--viewer-top', safeArea.top + 'px')
-                    }
-                }
-            }
-            // 加载密码保存和自动连接
-            loginInfo.address = runtimeData.sysConfig.address
-            if (
+            if (this.autoLoginParams.token) {
+                this.loginInfo.token = this.autoLoginParams.token;
+            } else if (
                 runtimeData.sysConfig.save_password &&
                 runtimeData.sysConfig.save_password != true
             ) {
-                loginInfo.token = runtimeData.sysConfig.save_password
-                this.tags.savePassword = true
+                this.loginInfo.token = runtimeData.sysConfig.save_password;
+                this.tags.savePassword = true;
             }
+            // 跳过导航介绍（引导页）
+            if (this.autoLoginParams.skipwelcome === '1' || this.autoLoginParams.skipwelcome === 'true') {
+                localStorage.setItem('guide', '1');
+            }
+            // 加载密码保存和自动连接
             if (runtimeData.sysConfig.auto_connect == true) {
                 this.connect()
             }
