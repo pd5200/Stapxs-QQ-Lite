@@ -277,9 +277,30 @@ export default defineComponent({
                 ticks: 0,
                 value: 0,
             },
+            autoLoginParams: {
+                address: '',
+                token: '',
+                skipwelcome: ''
+            },
         }
     },
     mounted() {
+        // ==== 解析 URL 参数并自动填充 ====
+        const params = new URLSearchParams(window.location.search);
+        this.autoLoginParams = {
+            address: params.get('address') || '',
+            token: params.get('token') || '',
+            skipwelcome: params.get('skipwelcome') || ''
+        };
+        if (typeof this.autoLoginParams.address === 'string') {
+            this.loginInfo.address = this.autoLoginParams.address;
+        }
+        if (typeof this.autoLoginParams.token === 'string') {
+            this.loginInfo.token = this.autoLoginParams.token;
+        }
+        if (this.autoLoginParams.address || this.autoLoginParams.token) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         const logger = new Logger()
         window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
         // 页面加载完成后
