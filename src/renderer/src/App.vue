@@ -483,6 +483,58 @@ export default defineComponent({
                 document.title = title
                 callBackend(undefined, 'win:setTitle', false, title)
             }
+
+            // ==== 系统初始化与日志 ====
+            if(import.meta.env.DEV) {
+                logger.debug('stapxs-qq-lite.su:$/mnt/boot/dawnHunt/bin/core --pour /mnt/app/bin/main', true)
+                logger.system('[ dawnHuntCore Version: 1.0 Beta, dawnHuntDB: 2025-04-24 ]')
+            } else {
+                logger.debug('stapxs-qq-lite.user:$/mnt/app/bin/main', true)
+            }
+            logger.add(LogType.DEBUG, '系统配置', runtimeData.sysConfig)
+
+            // ==== 主题与样式设置 ====
+            Option.run('opt_dark', Option.get('opt_dark'))
+            Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
+            Option.run('theme_color', Option.get('theme_color'))
+            Option.run('opt_auto_win_color', Option.get('opt_auto_win_color'))
+
+            // ==== 平台特性初始化 ====
+            if (['linux', 'win32'].includes(runtimeData.tags.platform ?? '')) {
+                const app = document.getElementById('base-app')
+                if (app) app.classList.add('withBar')
+            }
+
+            // ==== 系统初始化日志 ====
+            logger.system('欢迎回来，开发者。Stapxs QQ Lite 正处于 ' + (this.dev ? 'development' : 'production') + ' 模式。正在为您加载更多功能。')
+
+            // ==== 移动端特性加载 ====
+            App.loadMobile()
+            App.loadAppendStyle()
+
+            // ==== 安全区域适配 ====
+            const baseApp = document.getElementById('base-app')
+            if (baseApp) {
+                baseApp.style.setProperty('--safe-area-bottom',
+                    (Option.get('fs_adaptation') > 0 ? Option.get('fs_adaptation') : 0) + 'px')
+                baseApp.style.setProperty('--safe-area-top', '0')
+                baseApp.style.setProperty('--safe-area-left', '0')
+                baseApp.style.setProperty('--safe-area-right', '0')
+
+                // Capacitor：移动端初始化安全区域
+                if (runtimeData.tags.clientType == 'capacitor') {
+                    const safeArea = await callBackend('SafeArea', 'getSafeArea', true)
+                    if (safeArea) {
+                        logger.add(LogType.DEBUG, '安全区域：', safeArea)
+                        baseApp.style.setProperty('--safe-area-top', safeArea.top + 'px')
+                        baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
+                        baseApp.style.setProperty('--safe-area-left', safeArea.left + 'px')
+                        baseApp.style.setProperty('--safe-area-right', safeArea.right + 'px')
+                        // 图片查看器安全区域
+                        document.documentElement.style.setProperty('--safe-area--viewer-top', safeArea.top + 'px')
+                    }
+                }
+            }
         }
         // 页面关闭前
         window.onbeforeunload = () => {
